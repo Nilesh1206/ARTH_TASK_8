@@ -14,11 +14,14 @@ while True :
 	print("""
 	press 1 : to start the aws EC2 instance
 	press 2 : to create the EBS volume
-	press 3 : to attach the EBS volume to the EC2 instance	
-	press 4 : to create the S3 Bucket
-	press 5 : to copy file from your storage to S3 Bucket
-	press 6 : to create Cloudfront Distribution
-	press 7 : to exit
+	press 3 : to attach the EBS volume to the EC2 instance
+	press 4 : formatting , partition in ec2 instance.
+	press 5 : installing httpd and mounting directory , starting htttpd , status of httpd
+	press 6 : login in ec2-instance
+	press 7 : to create the S3 Bucket and make it public 
+	press 8 : to copy file from your storage to S3 Bucket
+	press 9 : to create Cloudfront Distribution
+	press 10 : to exit
 	""")
 
 	ch = input("enter your choice : ")
@@ -39,23 +42,42 @@ while True :
 		os.system("aws ec2 attach-volume --volume-id {} --instance-id {} --device /dev/xvdf".format(volid,inid))
 		print("Successfully attached your EBS to your Ec2 instance")
 
-	elif ch == "4":
+	elif ch=="4":
+		ip=input("Enter instance id:")
+		k=input("Enter key name:")
+		os.system("ssh -l ec2-user {0} -i {1} sudo fdisk /dev/xvdf".format(ip,k))
+		os.system("ssh -l ec2-user {0} -i {1} sudo mkfs.ext4 /dev/xvdf".format(ip,k))
+	
+	elif ch=="5":
+		ip=input("Enter instance id:")
+		k=input("Enter key name:")
+		os.system("ssh -l ec2-user {0} -i {1} sudo yum install httpd -y".format(ip,k))
+		os.system("ssh -l ec2-user {0} -i {1} sudo mount /dev/xvdf /var/www/html".format(ip,k))
+		os.system("ssh -l ec2-user {0} -i {1} sudo systemctl start httpd".format(ip,k))
+		os.system("ssh -l ec2-user {0} -i {1} sudo systemctl status httpd".format(ip,k))
+		
+	
+	elif ch=="6":
+		os.system("ssh -l ec2-user {0} -i {1}".format(ip,k))
+	
+	elif ch == "7":
 		buck = input("create your Unique Bucket name : ")
 		buckreg = input("enter region where you want to make your Bucket : ")
 		os.system("aws s3api create-bucket --bucket {} --region {} --create-bucket-configuration LocationConstraint={}".format(buck,buckreg,buckreg))
-		print("Successfully created Bucket {} in {}".format(buck,buckreg))
+		os.system("aws s3api put-bucket-acl --acl public-read --bucket {0}".format(buck))
+		print("Successfully created Bucket {} in {} publickely".format(buck,buckreg))
 
-	elif ch == "5":
+	elif ch == "8":
 		filep = input("enter the path of file : ")
-		os.system("aws s3 cp {} s3://{}/{} --acl public-read".format(filep,buck,filep))
-		print("Successfully copied the file from your storage to S3 bucket")
+		os.system("aws s3 cp {} s3://{}/{} --acl public-read".format(filep,buck,filep)) 
+		print("Successfully copied the file from your storage to S3 bucket publickely.")
 
-	elif ch == "6":
+	elif ch == "9":
 		buckn = input("enter your S3 bucket name you want to attach in cloudfront : ")
 		os.system("aws cloudfront create-distribution --origin-domain-name {}.s3.amazonaws.com".format(buckn))
 		print("Successfully created cloudfront distribution")
 
-	elif ch == "7":
+	elif ch == "10":
 		exit()
 	
 	else :
